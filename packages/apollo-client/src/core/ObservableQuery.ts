@@ -367,13 +367,15 @@ export class ObservableQuery<
         this.queryId,
       )
       .then(
-        fetchMoreResult => {
-          this.updateQuery((previousResult: any) =>
-            fetchMoreOptions.updateQuery(previousResult, {
-              fetchMoreResult: fetchMoreResult.data as TData,
-              variables: combinedOptions.variables as TVariables,
-            }),
-          );
+        (fetchMoreResult: ApolloQueryResult<TData>) => {
+          if (!fetchMoreResult.ignore) {
+            this.updateQuery((previousResult: any) =>
+              fetchMoreOptions.updateQuery(previousResult, {
+                fetchMoreResult: fetchMoreResult.data as TData,
+                variables: combinedOptions.variables as TVariables,
+              }),
+            );
+          }
           this.queryManager.stopQuery(qid);
           return fetchMoreResult as ApolloQueryResult<TData>;
         },

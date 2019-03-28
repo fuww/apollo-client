@@ -1198,6 +1198,7 @@ export class QueryManager<TStore> {
     const { variables, errorPolicy = 'none', fetchPolicy } = options;
     let resultFromStore: any;
     let errorsFromStore: any;
+    let lastRequestId: number;
 
     return new Promise<ApolloQueryResult<T>>((resolve, reject) => {
       const observable = this.getObservableFromLink(
@@ -1215,6 +1216,12 @@ export class QueryManager<TStore> {
           subscriptions.delete(subscription);
         });
       };
+
+      // In case fetchRequest was called by fetchMore we look
+      // at fetchMoreForQueryId to prevent race conditions
+      // Otherwise we look at queryId
+      // default the lastRequestId to 1
+      lastRequestId = this.getQuery(fetchMoreForQueryId || queryId).lastRequestId || 1;
 
       const subscription = observable.map((result: ExecutionResult) => {
         if (requestId >= this.getQuery(queryId).lastRequestId) {
@@ -1278,6 +1285,7 @@ export class QueryManager<TStore> {
             loading: false,
             networkStatus: NetworkStatus.ready,
             stale: false,
+            ignore: requestId < lastRequestId,
           });
         },
       });
